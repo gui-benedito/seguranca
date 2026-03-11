@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+if [ -f /var/log/auth.log ]; then
+    LOG="/var/log/auth.log"
+elif [ -f /var/log/secure ]; then
+    LOG="/var/log/secure"
+else
+    echo "Arquivo de log não encontrado."
+    exit 1
+fi
+
+echo "RELATÓRIO DE LOGINS REJEITADOS (exceto senha incorreta)"
+echo "Gerado em: $(date +'%d/%m/%Y')"
+echo "-------------------------------------------------------"
+
+grep -Ei 'failed|failure|invalid user|user unknown|not allowed|authentication failure|denied' "$LOG" | \
+grep -Eiv 'failed password|incorrect password|invalid password' | \
+while read -r linha
+do
+    data_hora=$(echo "$linha" | awk '{print $1, $2, $3}')
+    usuario=$(echo "$linha" | sed -n \
+        -e 's/.*invalid user \([^ ]*\).*/\1/p' \
+        -e 's/.*user unknown[: ]*\([^ ]*\).*/\1/p' \
+        -e 's/.*for \(invalid user \)\?\([^ ]*\).*/\2/p' \
+        -e 's/.*user=\([^ ]*\).*/\1/p' | head -n 1)
+
+    [ -z "$usuario" ] && usuario="não identificado"
+
+    echo "Data/Hora: $data_hora | Usuário: $usuario"
+    echo "Motivo/Log: $linha"
+    echo "-------------------------------------------------------"
+done

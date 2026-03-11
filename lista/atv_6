@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+echo "RELATÓRIO DO ÚLTIMO BOOT DO SISTEMA"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+boot=$(who -b | awk '{print $3, $4}')
+
+echo "Última inicialização do sistema: $boot"

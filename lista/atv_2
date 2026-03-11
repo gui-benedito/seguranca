@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "Relatório de Logins Bem-Sucedidos" 
+echo "Gerado em: $(date +'%d/%m/%Y')" 
+echo "----------------------------------------" 
+
+# Captura logins válidos
+last -w | grep -v "reboot" | grep -v "wtmp" | while read usuario terminal data hora resto
+do
+    echo "Usuário: $usuario | Data/Hora: $data $hora"
+done
+

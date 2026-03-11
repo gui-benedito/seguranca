@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+if [ -f /var/log/auth.log ]; then
+    LOG="/var/log/auth.log"
+elif [ -f /var/log/secure ]; then
+    LOG="/var/log/secure"
+else
+    echo "Arquivo de log não encontrado."
+    exit 1
+fi
+
+echo "RELATÓRIO DE USO DO COMANDO SU"
+echo "Gerado em: $(date)"
+echo "----------------------------------------"
+
+grep 'su: pam_unix(su:session): session opened for user' $LOG | while read linha
+do
+    data=$(echo $linha | awk '{print $1, $2, $3}')
+    destino=$(echo $linha | sed -n 's/.*session opened for user \([^ ]*\).*/\1/p')
+    origem=$(echo $linha | sed -n 's/.* by \([^ (]*\).*/\1/p')
+
+    echo "Data/Hora: $data | Origem: $origem | Destino: $destino"
+done

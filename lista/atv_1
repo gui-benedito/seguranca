@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+#  Descobrir log correto
+LOG_FILE=""
+if [[ -f /var/log/auth.log ]]; then
+  LOG_FILE="/var/log/auth.log"
+elif [[ -f /var/log/secure ]]; then
+  LOG_FILE="/var/log/secure"
+else
+  echo "Erro: não encontrei /var/log/auth.log nem /var/log/secure."
+  exit 1
+fi
+
+#  Filtrar linhas de falha e extrair usuário
+grep -aE "authentication failure|Failed password" "$LOG_FILE" \
+| awk '
+  /authentication failure/ {
+    # remove tudo até "user="
+    if ($0 ~ /user=/) {
+      line = $0
+      sub(/^.*user=/, "", line)     
+      sub(/[[:space:]].*$/, "", line) 
+      if (line != "") print line
+    }
+    next
+  }
+
+  /Failed password/ {
+    for (i=1; i<=NF; i++) {
+      if ($i == "for") {
+        if ($(i+1) == "invalid" && $(i+2) == "user") user = $(i+3)
+        else user = $(i+1)
+        if (user != "" && user != "from") print user
+        break
+      }
+    }
+  }
+' \
+| sort \
+| uniq -c \
+| sort -nr \
+| awk '{printf "%-25s %s\n", $2, $1}'
