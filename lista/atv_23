@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE TEMPO DE SESSÃO DO USUÁRIO"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+read -p "Digite o nome do usuário: " USUARIO
+
+last "$USUARIO" | grep -v "wtmp begins" | while read -r linha
+do
+    login=$(echo "$linha" | awk '{print $4, $5, $6, $7}')
+    logout=$(echo "$linha" | awk '{print $9}')
+    tempo=$(echo "$linha" | grep -o "([0-9:]*")
+
+    echo "Login: $login | Logout: $logout | Tempo logado: $tempo"
+done

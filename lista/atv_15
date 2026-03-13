@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+LOG="/var/log/auth.log"
+
+echo "RELATÓRIO DE EVENTOS ENTRE 14h E 15h"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+read -p "Digite o dia a ser analisado (ex: Mar 11): " DIA
+
+grep "^$DIA 14:" $LOG

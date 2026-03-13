@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE ERROS E AVISOS DO SERVIÇO SSHD"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+journalctl -u ssh.service | grep -Ei "error|warning" | while read -r linha
+do
+    echo "$linha"
+done

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+LOG="/var/log/auth.log"
+
+echo "MONITORAMENTO DE LOGIN FALHO EM TEMPO REAL"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+tail -F "$LOG" | grep --line-buffered -Ei "failed password|authentication failure|invalid user"

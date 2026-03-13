@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE ALTERAÇÕES DE STATUS DE SERVIÇOS"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+journalctl --since "1 day ago" | grep -E "Started|Stopped" | while read -r linha
+do
+    data_hora=$(echo "$linha" | awk '{print $1, $2, $3}')
+    servico=$(echo "$linha" | sed -n 's/.*\(Started\|Stopped\) \(.*\)\./\2/p')
+    status=$(echo "$linha" | sed -n 's/.*\(Started\|Stopped\).*/\1/p')
+
+    echo "Data/Hora: $data_hora | Serviço: $servico | Status: $status"
+done

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE PROBLEMAS COM DISPOSITIVOS DE HARDWARE"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+journalctl -k | grep -Ei "error|fail|failed|warning|warn|disk|usb|sda|sdb|ata|nvme|device|hardware|I/O error" | while read -r linha
+do
+    echo "$linha"
+done

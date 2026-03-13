@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+if [ -f /var/log/auth.log ]; then
+    LOG="/var/log/auth.log"
+elif [ -f /var/log/secure ]; then
+    LOG="/var/log/secure"
+else
+    echo "Arquivo de log não encontrado."
+    exit 1
+fi
+
+echo "RELATÓRIO DE USO DE GERENCIAMENTO DE PACOTES"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+grep 'sudo: .*COMMAND=' "$LOG" | grep -E '(/apt |/apt-get |/dpkg )' | while read -r linha
+do
+    data_hora=$(echo "$linha" | awk '{print $1, $2, $3}')
+    usuario=$(echo "$linha" | sed -n 's/.*sudo: \([^ ]*\) .*/\1/p')
+    comando=$(echo "$linha" | sed -n 's/.*COMMAND=\(.*\)$/\1/p')
+
+    acao="outra ação"
+
+    echo "$comando" | grep -qw "install" && acao="instalação"
+    echo "$comando" | grep -qw "remove" && acao="remoção"
+    echo "$comando" | grep -qw "purge" && acao="remoção completa"
+    echo "$comando" | grep -qw "update" && acao="atualização da lista de pacotes"
+    echo "$comando" | grep -qw "upgrade" && acao="atualização de pacotes"
+    echo "$comando" | grep -qw "autoremove" && acao="remoção automática"
+    echo "$comando" | grep -qw "full-upgrade" && acao="atualização completa"
+    echo "$comando" | grep -qw "dpkg -i" && acao="instalação manual com dpkg"
+
+    echo "Data/Hora: $data_hora | Usuário: $usuario | Ação: $acao"
+done

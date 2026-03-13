@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE PACOTES ATUALIZADOS"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+for arquivo in /var/log/dpkg.log /var/log/dpkg.log.1
+do
+    [ -f "$arquivo" ] || continue
+
+    grep " upgrade " "$arquivo" | while read -r linha
+    do
+        data_log=$(echo "$linha" | awk '{print $1}')
+        hora_log=$(echo "$linha" | awk '{print $2}')
+        pacote=$(echo "$linha" | awk '{print $4}')
+
+        echo "Data: $(date -d "$data_log" +'%d/%m/%Y') | Hora: $hora_log | Pacote: $pacote"
+    done
+done

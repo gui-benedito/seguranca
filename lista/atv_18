@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+if [ -f /var/log/auth.log ]; then
+    LOG="/var/log/auth.log"
+elif [ -f /var/log/secure ]; then
+    LOG="/var/log/secure"
+else
+    echo "Arquivo de log não encontrado."
+    exit 1
+fi
+
+echo "RELATÓRIO DE TENTATIVAS DE LOGIN FALHO"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+grep -Ei "failed password|authentication failure|FAILED SU|failure" "$LOG" | while read -r linha
+do
+    data_hora=$(echo "$linha" | awk '{print $1, $2, $3}')
+
+    metodo="desconhecido"
+    echo "$linha" | grep -qi "sshd" && metodo="ssh"
+    echo "$linha" | grep -qi "su" && metodo="su"
+    echo "$linha" | grep -qi "sudo" && metodo="sudo"
+    echo "$linha" | grep -qi "login" && metodo="login"
+
+    usuario=$(echo "$linha" | sed -n \
+        -e 's/.*for \(invalid user \)\?\([^ ]*\).*/\2/p' \
+        -e 's/.*user=\([^ ]*\).*/\1/p' \
+        -e 's/.*user \([^ ]*\).*/\1/p' | head -n 1)
+
+    [ -z "$usuario" ] && usuario="não identificado"
+
+    echo "Data/Hora: $data_hora | Usuário: $usuario | Método: $metodo"
+done

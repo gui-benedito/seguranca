@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+LOG="/var/log/syslog"
+
+echo "RELATÓRIO DE EVENTOS CRÍTICOS DO SISTEMA"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+grep -Ei "critical|fatal|segfault" $LOG

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE PROCESSOS ENCERRADOS COM ERRO GRAVE"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+for log in /var/log/syslog /var/log/messages
+do
+    [ -f "$log" ] || continue
+
+    grep -Ei "segfault|killed" "$log" | while read -r linha
+    do
+        echo "$linha"
+    done
+done

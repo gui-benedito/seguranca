@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+echo "RELATÓRIO DE TEMPO DE ATIVIDADE DO SISTEMA"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+ultima_linha=$(last -x | grep -E 'shutdown|reboot|boot' | head -n 2)
+
+boot_linha=$(echo "$ultima_linha" | grep -m 1 -E 'reboot|boot')
+shutdown_linha=$(echo "$ultima_linha" | grep -m 1 'shutdown')
+
+if [ -z "$boot_linha" ] || [ -z "$shutdown_linha" ]; then
+    echo "Não foi possível encontrar eventos suficientes de boot e shutdown."
+    exit 1
+fi
+
+boot_data=$(echo "$boot_linha" | awk '{print $5, $6, $7, $8}')
+shutdown_data=$(echo "$shutdown_linha" | awk '{print $5, $6, $7, $8}')
+
+boot_epoch=$(date -d "$boot_data" +%s 2>/dev/null)
+shutdown_epoch=$(date -d "$shutdown_data" +%s 2>/dev/null)
+
+if [ -z "$boot_epoch" ] || [ -z "$shutdown_epoch" ]; then
+    echo "Erro ao converter datas."
+    exit 1
+fi
+
+diferenca=$((boot_epoch - shutdown_epoch))
+
+dias=$((diferenca / 86400))
+horas=$(((diferenca % 86400) / 3600))
+minutos=$(((diferenca % 3600) / 60))
+segundos=$((diferenca % 60))
+
+echo "Último shutdown : $shutdown_data"
+echo "Último boot     : $boot_data"
+echo "Tempo entre eventos: ${dias}d ${horas}h ${minutos}m ${segundos}s"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+LOG="/var/log/syslog"
+
+echo "RELATÓRIO DE SERVIÇOS QUE MAIS GERAM LOGS"
+echo "Data do relatório: $(date +'%d/%m/%Y')"
+echo "----------------------------------------"
+
+awk '{print $5}' $LOG | sed 's/\[.*\]//' | sed 's/://' | sort | uniq -c | sort -nr
