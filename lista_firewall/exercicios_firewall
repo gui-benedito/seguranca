@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+
+# Menu
+menu() {
+ echo ""
+ echo "========== MENU =========="
+ echo "1  - Verificar status"
+ echo "2  - Habilitar UFW"
+ echo "3  - Desabilitar UFW"
+ echo "4  - Default INPUT DROP"
+ echo "5  - Default OUTPUT ACCEPT"
+ echo "6  - Liberar SSH (22)"
+ echo "7  - Liberar HTTP (80)"
+ echo "8  - Liberar 8080"
+ echo "9  - Liberar DNS (53 UDP)"
+ echo "10 - Regras essenciais iptables"
+ echo "11 - Bloquear MySQL (3306 DROP)"
+ echo "12 - Rejeitar PostgreSQL (5432 REJECT)"
+ echo "13 - Bloquear IP 1.2.3.4"
+ echo "14 - SSH apenas 192.168.1.100"
+ echo "15 - MySQL apenas interface eth1"
+ echo "16 - Bloquear INVALID"
+ echo "17 - Listar regras numeradas"
+ echo "18 - Deletar regra 5"
+ echo "19 - Resetar firewall"
+ echo "20 - Rate limit SSH"
+ echo "21 - Logging 5432"
+ echo "22 - NAT 80 -> 8080"
+ echo "0  - Sair"
+ echo "=========================="
+ echo ""
+}
+
+pause() {
+ echo ""
+ read -p "Pressione ENTER para continuar..."
+ echo ""
+}
+
+verificar_status() {
+ echo "[STATUS]"
+ sudo ufw status verbose
+ sudo iptables -L -v -n
+ pause
+}
+
+habilitar_ufw() {
+ sudo ufw enable
+ pause
+}
+
+desabilitar_ufw() {
+ sudo ufw disable
+ pause
+}
+
+default_input_drop() {
+ sudo ufw default deny incoming
+ sudo iptables -P INPUT DROP
+ pause
+}
+
+default_output_accept() {
+ sudo ufw default allow outgoing
+ sudo iptables -P OUTPUT ACCEPT
+ pause
+}
+
+liberar_ssh() {
+ sudo ufw allow 22/tcp
+ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+ pause
+}
+
+liberar_http() {
+ sudo ufw allow 80/tcp
+ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+ pause
+}
+
+liberar_8080() {
+ sudo ufw allow 8080/tcp
+ sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+ pause
+}
+
+liberar_dns() {
+ sudo ufw allow 53/udp
+ sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
+ pause
+}
+
+regras_essenciais() {
+ sudo iptables -A INPUT -i lo -j ACCEPT
+ sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+ pause
+}
+
+bloquear_mysql() {
+ sudo ufw deny 3306/tcp
+ sudo iptables -A INPUT -p tcp --dport 3306 -j DROP
+ pause
+}
+
+rejeitar_postgres() {
+ sudo ufw reject 5432/tcp
+ sudo iptables -A INPUT -p tcp --dport 5432 -j REJECT
+ pause
+}
+
+bloquear_ip() {
+ sudo ufw deny from 1.2.3.4
+ sudo iptables -A INPUT -s 1.2.3.4 -j DROP
+ pause
+}
+
+ssh_ip_especifico() {
+ sudo ufw allow from 192.168.1.100 to any port 22 proto tcp
+ sudo iptables -A INPUT -p tcp -s 192.168.1.100 --dport 22 -j ACCEPT
+ pause
+}
+
+mysql_eth1() {
+ sudo ufw allow in on eth1 to any port 3306
+ sudo iptables -A INPUT -i eth1 -p tcp --dport 3306 -j ACCEPT
+ pause
+}
+
+bloquear_invalid() {
+ sudo iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+ pause
+}
+
+listar_regras() {
+ sudo ufw status numbered
+ sudo iptables -L INPUT --line-numbers
+ pause
+}
+
+deletar_regra_5() {
+ sudo ufw delete 5
+ sudo iptables -D INPUT 5
+ pause
+}
+
+resetar_firewall() {
+ sudo ufw reset
+
+ sudo iptables -F
+ sudo iptables -X
+ sudo iptables -Z
+ sudo iptables -P INPUT ACCEPT
+ sudo iptables -P OUTPUT ACCEPT
+ sudo iptables -P FORWARD ACCEPT
+
+ pause
+}
+
+rate_limit_ssh() {
+ sudo ufw limit 22/tcp
+ sudo iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -m limit --limit 3/min --limit-burst 5 -j ACCEPT
+ pause
+}
+
+logging_5432() {
+ sudo iptables -A INPUT -p tcp --dport 5432 -j LOG --log-prefix "DB ATTEMPT: "
+ sudo iptables -A INPUT -p tcp --dport 5432 -j DROP
+ sudo ufw logging on
+ pause
+}
+
+nat_8080() {
+ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
+ echo "Para UFW: editar /etc/ufw/before.rules manualmente"
+ pause
+}
+
+# LOOP
+while true; do
+  menu
+  read -p "Opção: " option
+  echo ""
+
+  case $option in
+    0) echo "Saindo..." && break ;;
+    1) verificar_status ;;
+    2) habilitar_ufw ;;
+    3) desabilitar_ufw ;;
+    4) default_input_drop ;;
+    5) default_output_accept ;;
+    6) liberar_ssh ;;
+    7) liberar_http ;;
+    8) liberar_8080 ;;
+    9) liberar_dns ;;
+    10) regras_essenciais ;;
+    11) bloquear_mysql ;;
+    12) rejeitar_postgres ;;
+    13) bloquear_ip ;;
+    14) ssh_ip_especifico ;;
+    15) mysql_eth1 ;;
+    16) bloquear_invalid ;;
+    17) listar_regras ;;
+    18) deletar_regra_5 ;;
+    19) resetar_firewall ;;
+    20) rate_limit_ssh ;;
+    21) logging_5432 ;;
+    22) nat_8080 ;;
+    *) echo "Opção inválida" ;;
+  esac
+done
+
+exit 0
